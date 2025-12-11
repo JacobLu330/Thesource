@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kassa - The Source</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            paper: {
+              200: '#FDF8EE',
+              600: '#EDE4D3',
+            },
+            box: '#FDFBF8',
+            prim: {
+              800: '#9E3611',
+            },
+            accent: {
+              green: '#1f9931',
+              greenLight: '#42ff60',
+              fossil: '#0b891e',
+            }
+          },
+          fontFamily: {
+            sans: ['Roboto', 'sans-serif'],
+            kansas: ['"New Kansas"', 'Georgia', 'serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @font-face {
+      font-family: 'New Kansas';
+      src: local('Georgia');
+      font-weight: 600;
+    }
+    
+    body {
+      font-family: 'Roboto', sans-serif;
+    }
+    
+    .font-kansas {
+      font-family: 'New Kansas', Georgia, serif;
+    }
+    
+    /* Custom radio button styling */
+    .radio-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    
+    .radio-option input[type="radio"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      min-width: 16px;
+      min-height: 16px;
+      border: 2px solid #666;
+      border-radius: 50%;
+      outline: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    
+    .radio-option input[type="radio"]:checked {
+      border-color: #2d2d35;
+      background: radial-gradient(circle, #2d2d35 40%, transparent 40%);
+    }
+    
+    /* Custom checkbox styling */
+    .custom-checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    
+    .custom-checkbox input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      min-height: 18px;
+      background: #42424c;
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    
+    .custom-checkbox input[type="checkbox"]:checked {
+      background: #42424c url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z'/%3E%3C/svg%3E") center/12px no-repeat;
+    }
+    
+    /* Quantity button styling */
+    .qty-btn {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s;
+    }
+    
+    .qty-btn:hover {
+      background-color: rgba(0,0,0,0.05);
+      border-radius: 50%;
+    }
+    
+    /* Donation button styling */
+    .donation-btn {
+      transition: all 0.2s;
+    }
+    
+    .donation-btn.selected {
+      background-color: #2d2d35;
+      color: white;
+      border-color: #2d2d35;
+    }
+    
+    /* Smooth scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    /* Animation for interactions */
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    
+    .animate-pulse-once {
+      animation: pulse 0.3s ease-in-out;
+    }
+    
+    /* Slide down animation */
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        max-height: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        max-height: 2000px;
+        transform: translateY(0);
+      }
+    }
+    
+    .slide-down {
+      animation: slideDown 0.4s ease-out forwards;
+      overflow: hidden;
+    }
+    
+    /* Leaf icon */
+    .leaf-icon {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      color: #0b891e;
+    }
+  </style>
+</head>
+<body class="bg-paper-600 min-h-screen">
+  <!-- Container for mobile view -->
+  <div class="max-w-[393px] mx-auto bg-paper-600 min-h-screen relative pb-8">
+    
+    <!-- Header -->
+    <header class="bg-prim-800 h-[73px] flex items-center justify-center relative px-4">
+      <button class="absolute left-4 flex items-center gap-1 text-[#fdf6e6] text-xs hover:opacity-80 transition-opacity">
+        <svg class="w-2 h-3 rotate-180" fill="currentColor" viewBox="0 0 8 14">
+          <path d="M1 1l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Tillbaka
+      </button>
+      <div class="text-[#fdf6e6] text-xl font-bold tracking-wide">
+        <span class="italic">The</span> <span class="font-semibold">Source</span>
+      </div>
+    </header>
+    
+    <!-- Cart Summary Section -->
+    <section class="bg-box mt-5 rounded-t-[8px] px-5 py-6">
+      <h1 class="font-kansas font-semibold text-2xl text-center text-black mb-6 tracking-wide">Kassa</h1>
+      
+      <!-- Product Card -->
+      <div class="flex gap-4 mb-6">
+        <div class="w-20 h-20 rounded-lg overflow-hidden bg-white flex-shrink-0">
+          <img src="https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=160&h=160&fit=crop" alt="Vita strumpor 3-pack" class="w-full h-full object-cover">
+        </div>
+        <div class="flex-1">
+          <p class="font-medium text-sm text-black">Vita strumpor 3-pack</p>
+          <p class="text-xs text-gray-600 mt-0.5">Storlek 40-45, bomull</p>
+          <div class="flex items-center justify-between mt-3">
+            <p class="font-medium text-sm text-black" id="unit-price">79 kr</p>
+            <div class="flex items-center gap-1">
+              <span class="bg-accent-green text-[#42ff60] text-[8px] px-2 py-1 rounded-full">Hållbart val</span>
+              <div class="border border-black rounded-full flex items-center h-[30px] px-1">
+                <button class="qty-btn text-lg" onclick="updateQuantity(-1)">−</button>
+                <span class="w-6 text-center font-medium" id="quantity">1</span>
+                <button class="qty-btn text-lg" onclick="updateQuantity(1)">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Discount code -->
+      <button class="text-xs text-gray-600 underline mb-4 hover:text-gray-800 transition-colors" onclick="toggleDiscountCode()">
+        Lägg till rabattkod
+      </button>
+      
+      <!-- Discount input (hidden by default) -->
+      <div id="discount-section" class="hidden mb-4 flex gap-2">
+        <input type="text" placeholder="Rabattkod" class="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-prim-800">
+        <button class="bg-prim-800 text-white px-4 py-2 rounded text-sm font-medium hover:bg-opacity-90 transition-colors">Använd</button>
+      </div>
+      
+      <!-- Pricing breakdown -->
+      <div class="border-t border-gray-200 pt-4 space-y-2">
+        <div class="flex justify-between text-xs text-gray-600">
+          <span>Varor</span>
+          <span id="items-total">79kr</span>
+        </div>
+        <div class="flex justify-between text-xs text-gray-600">
+          <span>Frakt</span>
+          <span id="shipping-cost">29kr</span>
+        </div>
+      </div>
+      
+      <!-- Total -->
+      <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+        <h2 class="font-kansas font-semibold text-2xl text-black">Summa</h2>
+        <span class="font-semibold text-2xl text-gray-700" id="total-price">108kr</span>
+      </div>
+    </section>
+    
+    <!-- Delivery Method Section -->
+    <section class="bg-box mt-4 rounded-[8px] px-5 py-6">
+      <h2 class="font-kansas font-semibold text-2xl text-center text-black mb-6">Leveransmetod</h2>
+      
+      <!-- Postal Code -->
+      <div class="mb-6">
+        <label class="font-medium text-base text-black block mb-2">Postnummer</label>
+        <input type="text" id="postal-code" placeholder="Ange postnummer" class="w-full bg-white border border-gray-300 rounded-[4px] px-4 py-3 text-base text-black focus:outline-none focus:border-prim-800 transition-colors" oninput="checkPostalCode(this)">
+      </div>
+      
+      <!-- Delivery Options (hidden until postal code is filled) -->
+      <div id="delivery-options" class="border-t border-gray-200 hidden">
+        <label class="font-medium text-base text-black block py-4">Leveransalternativ</label>
+        
+        <div class="space-y-0">
+          <!-- Option 1: Citymail -->
+          <label class="radio-option py-4 border-t border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors -mx-5 px-5">
+            <input type="radio" name="delivery" value="citymail" onchange="selectDelivery(39)">
+            <div class="flex-1">
+              <div class="flex justify-between items-start">
+                <p class="font-medium text-base text-black">Citymail brevlåda/dörr</p>
+                <span class="font-medium text-sm">39kr</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">Levereras mellan måndag 8 december och tisdag 9 december</p>
+              <p class="text-[10px] text-gray-500 mt-1">Frakfritt över 349kr</p>
+            </div>
+          </label>
+          
+          <!-- Option 2: Instabox -->
+          <label class="radio-option py-4 border-t border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors -mx-5 px-5">
+            <input type="radio" name="delivery" value="instabox" checked onchange="selectDelivery(29)">
+            <div class="flex-1">
+              <div class="flex justify-between items-start">
+                <p class="font-medium text-base text-black">Instabox</p>
+                <span class="font-medium text-sm">29kr</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">Levereras mellan måndag 8 december och tisdag 9 december</p>
+              <p class="text-[10px] text-gray-500 mt-1">Frakfritt över 349kr</p>
+            </div>
+          </label>
+          
+          <!-- Option 3: Budbee Box -->
+          <label class="radio-option py-4 border-t border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors -mx-5 px-5">
+            <input type="radio" name="delivery" value="budbee-box" onchange="selectDelivery(29)">
+            <div class="flex-1">
+              <div class="flex justify-between items-start">
+                <div class="flex items-center gap-2">
+                  <p class="font-medium text-base text-black">Budbee Box</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <!-- MDI Leaf Icon -->
+                  <svg class="leaf-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
+                  </svg>
+                  <span class="font-medium text-sm">29kr</span>
+                </div>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">Levereras mellan måndag 8 december och tisdag 9 december</p>
+              <p class="text-[10px] text-gray-500 mt-1"><span class="text-accent-fossil font-medium">Fossilfri</span> • Frakfritt över 500kr</p>
+            </div>
+          </label>
+          
+          <!-- Option 4: Airmee -->
+          <label class="radio-option py-4 border-t border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors -mx-5 px-5">
+            <input type="radio" name="delivery" value="airmee" onchange="selectDelivery(49)">
+            <div class="flex-1">
+              <div class="flex justify-between items-start">
+                <div class="flex items-center gap-2">
+                  <p class="font-medium text-base text-black">Airmee hemleverans</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <!-- MDI Leaf Icon -->
+                  <svg class="leaf-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
+                  </svg>
+                  <span class="font-medium text-sm">49kr</span>
+                </div>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">Levereras mellan måndag 8 december och tisdag 9 december</p>
+              <p class="text-[10px] text-gray-500 mt-1"><span class="text-accent-fossil font-medium">Fossilfri</span> • Frakfritt över 999kr</p>
+            </div>
+          </label>
+          
+          <!-- Option 5: Postnord -->
+          <label class="radio-option py-4 border-t border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors -mx-5 px-5">
+            <input type="radio" name="delivery" value="postnord" onchange="selectDelivery(49)">
+            <div class="flex-1">
+              <div class="flex justify-between items-start">
+                <p class="font-medium text-base text-black">Postnord ombud/box</p>
+                <span class="font-medium text-sm">49kr</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">Levereras mellan tisdag 9 december och onsdag 10 december</p>
+              <p class="text-[10px] text-gray-500 mt-1">Frakfritt över 499kr</p>
+            </div>
+          </label>
+          
+          <!-- Option 6: Budbee Home -->
+          <label class="radio-option py-4 border-t border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors -mx-5 px-5">
+            <input type="radio" name="delivery" value="budbee-home" onchange="selectDelivery(49)">
+            <div class="flex-1">
+              <div class="flex justify-between items-start">
+                <p class="font-medium text-base text-black">Budbee hemleverans</p>
+                <span class="font-medium text-sm">49kr</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">Levereras mellan måndag 8 december och tisdag 9 december</p>
+              <p class="text-[10px] text-gray-500 mt-1">Frakfritt över 999kr</p>
+            </div>
+          </label>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Sustainable Choices Section -->
+    <section class="bg-box mt-4 rounded-[8px] px-5 py-6">
+      <h2 class="font-kansas font-semibold text-2xl text-center text-black mb-6">Hållbara val</h2>
+      
+      <!-- Packaging Options -->
+      <div class="bg-white border border-gray-200 rounded-[8px] p-4 mb-4">
+        <label class="font-medium text-base text-black block mb-4">Transportförpackning</label>
+        
+        <div class="space-y-0">
+          <!-- New packaging -->
+          <label class="radio-option py-4 border-t border-gray-200 cursor-pointer">
+            <input type="radio" name="packaging" value="new" checked>
+            <div class="flex-1">
+              <p class="font-medium text-base text-black">Ny förpackning</p>
+              <p class="text-xs text-gray-500 mt-1 leading-relaxed">Vi använder FSC-certifierad kartong som standard. Större leveranser skickas med återvunnet fyllnadsmaterial och nedbrytbar tejp.</p>
+            </div>
+          </label>
+          
+          <!-- Reused packaging -->
+          <label class="radio-option py-4 border-t border-gray-200 cursor-pointer">
+            <input type="radio" name="packaging" value="reused">
+            <div class="flex-1">
+              <div class="flex justify-between items-start">
+                <div class="flex-1">
+                  <p class="font-medium text-base text-black">Återanvänd förpackning</p>
+                  <p class="text-xs text-gray-500 mt-1 leading-relaxed max-w-[180px]">Vi använder begagnade lådor i gott skick och i mån av tillgång.</p>
+                </div>
+                <div class="flex items-center gap-2 ml-2">
+                  <!-- MDI Leaf Icon -->
+                  <svg class="w-6 h-6 text-accent-fossil" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
+                  </svg>
+                  <img src="http://localhost:3845/assets/07cda8e303e3a346e14eb5ea2324fad21da8b7f5.png" alt="Eco packaging" class="w-14 h-14 rounded object-cover" onerror="this.src='https://images.unsplash.com/photo-1605918321755-0b5a0e9d2906?w=60&h=60&fit=crop'">
+                </div>
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+      
+      <!-- Climate Compensation -->
+      <div class="bg-white border border-gray-200 rounded-[8px] p-4">
+        <div class="flex justify-between items-start mb-4">
+          <div class="flex-1 pr-4">
+            <p class="font-medium text-base text-black">Klimatkompensera din order</p>
+            <p class="text-xs text-gray-500 mt-2 leading-relaxed">Vi samarbetar med <strong class="font-bold">Vi-skogen</strong> för en hållbar framtid. Vi matchar din donation upp till 1000 kr!</p>
+          </div>
+          <img src="http://localhost:3845/assets/06f066558c233872570a3165536aa70e1386f51d.png" alt="Vi-skogen" class="w-9 h-11 object-contain flex-shrink-0" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Vi-skogen_logo.svg/200px-Vi-skogen_logo.svg.png'">
+        </div>
+        
+        <div class="flex gap-2 mt-4">
+          <button class="donation-btn flex-1 border border-gray-300 rounded-[4px] py-2 text-xs text-center transition-all hover:border-gray-400" onclick="selectDonation(10, this)">10 kr</button>
+          <button class="donation-btn flex-1 border border-gray-300 rounded-[4px] py-2 text-xs text-center transition-all hover:border-gray-400" onclick="selectDonation(25, this)">25 kr</button>
+          <input type="number" min="0" max="5000" placeholder="Valfri summa" class="flex-1 border border-gray-300 rounded-[4px] py-2 px-2 text-xs text-center focus:outline-none focus:border-prim-800" id="custom-donation" oninput="customDonation(this)">
+        </div>
+      </div>
+    </section>
+    
+    <!-- Address & Payment Section -->
+    <section class="bg-box mt-4 rounded-[8px] px-5 py-6">
+      <h2 class="font-kansas font-semibold text-2xl text-center text-black mb-6">Address & Betalning</h2>
+      
+      <div class="bg-white border border-gray-200 rounded-[8px] p-4">
+        <!-- User Details -->
+        <div class="pb-4 border-b border-gray-200">
+          <label class="font-medium text-base text-black block mb-3">Dina uppgifter</label>
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-base text-black" id="display-name">Sven Svensson</p>
+              <p class="text-sm text-gray-500 mt-1" id="display-address">Sankte Knutsgatan 8, 271 50, Ystad</p>
+              <p class="text-sm text-gray-500" id="display-contact">s.svensson@gmail.com, 072•••••30</p>
+            </div>
+            <button class="text-[#237596] underline text-base hover:text-opacity-80 transition-colors" onclick="openAddressModal()">Ändra</button>
+          </div>
+          <div class="text-xs text-gray-500 mt-3 space-y-1">
+            <p class="underline cursor-pointer hover:text-gray-700">Klarnas villkor gäller</p>
+            <p class="underline cursor-pointer hover:text-gray-700">Hantera autofyllningsinställningar</p>
+          </div>
+        </div>
+        
+        <!-- Payment Methods -->
+        <div class="pt-4">
+          <label class="font-medium text-base text-black block mb-3">Betalningssätt</label>
+          
+          <div class="space-y-0">
+            <!-- Direct Payment -->
+            <label class="radio-option py-4 border-t border-gray-200 cursor-pointer">
+              <input type="radio" name="payment" value="direct" checked>
+              <div class="flex-1">
+                <p class="font-medium text-base text-black">Direkt</p>
+                <p class="text-sm text-gray-500 mt-0.5">Kort, Swish och bank</p>
+                <p class="text-xs text-gray-500 mt-1">Betala säkert med Klarnas <span class="underline">köparskydd</span>.</p>
+              </div>
+            </label>
+            
+            <!-- Invoice -->
+            <label class="radio-option py-4 border-t border-gray-200 cursor-pointer">
+              <input type="radio" name="payment" value="invoice">
+              <div class="flex-1">
+                <p class="font-medium text-base text-black">Faktura</p>
+                <p class="text-sm text-gray-500 mt-0.5">30 dagar, månadsfaktura, 0 kr</p>
+              </div>
+            </label>
+            
+            <!-- Card -->
+            <label class="radio-option py-4 border-t border-gray-200 cursor-pointer">
+              <input type="radio" name="payment" value="card">
+              <div class="flex-1">
+                <p class="font-medium text-base text-black">Betala med kort</p>
+                <p class="text-sm text-gray-500 mt-0.5">Fyll i kortuppgifter</p>
+              </div>
+            </label>
+            
+            <!-- Apple Pay -->
+            <label class="radio-option py-4 border-t border-gray-200 cursor-pointer">
+              <input type="radio" name="payment" value="apple-pay">
+              <div class="flex-1">
+                <p class="font-medium text-base text-black">Apple Pay</p>
+                <p class="text-sm text-gray-500 mt-0.5">Betala direkt</p>
+              </div>
+            </label>
+            
+            <!-- Google Pay -->
+            <label class="radio-option py-4 border-t border-gray-200 cursor-pointer">
+              <input type="radio" name="payment" value="google-pay">
+              <div class="flex-1">
+                <p class="font-medium text-base text-black">Google Pay</p>
+                <p class="text-sm text-gray-500 mt-0.5">Betala direkt</p>
+              </div>
+            </label>
+          </div>
+        </div>
+        
+        <!-- Newsletter -->
+        <div class="pt-4 border-t border-gray-200 mt-4">
+          <label class="custom-checkbox cursor-pointer">
+            <input type="checkbox" checked>
+            <div>
+              <p class="font-medium text-base text-black">Ja tack till nyhetsbrev och sms</p>
+              <p class="text-sm text-gray-500 mt-1 leading-relaxed">Jag vill ta deal av bra deals och inspirirande artiklar via nyhetsbrev (e-post) och sms. Du kan avsluta när du vill.</p>
+            </div>
+          </label>
+        </div>
+        
+        <!-- Total -->
+        <div class="pt-4 border-t border-gray-200 mt-4">
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="font-medium text-lg text-black">Totalbelopp</p>
+              <p class="text-sm text-gray-500">Inkl. moms & frakt</p>
+            </div>
+            <div class="text-right">
+              <p class="font-medium text-lg text-black" id="final-total">109 kr</p>
+              <button class="text-[#2b799b] text-sm underline hover:text-opacity-80 transition-colors" onclick="toggleDetails()">Visa detaljer</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Details (hidden by default) -->
+        <div id="details-section" class="hidden mt-4 pt-4 border-t border-gray-200 text-sm space-y-2">
+          <div class="flex justify-between text-gray-600">
+            <span>Varor</span>
+            <span id="detail-items">79 kr</span>
+          </div>
+          <div class="flex justify-between text-gray-600">
+            <span>Frakt</span>
+            <span id="detail-shipping">29 kr</span>
+          </div>
+          <div class="flex justify-between text-gray-600">
+            <span>Donation</span>
+            <span id="detail-donation">0 kr</span>
+          </div>
+          <div class="flex justify-between text-gray-600">
+            <span>Moms (25%)</span>
+            <span id="detail-tax">21,60 kr</span>
+          </div>
+        </div>
+        
+        <!-- Terms -->
+        <p class="text-[10px] text-gray-500 text-center mt-6 leading-relaxed">
+          Genom att klicka på "Betala köp" godkänner jag <span class="underline cursor-pointer">Klarnas villkor,</span> bekräftar <span class="underline cursor-pointer">dataskyddsinformationen</span> och godkänner thesource.coms <span class="underline cursor-pointer">allmänna vilkor.</span>
+        </p>
+        
+        <!-- Pay Button -->
+        <button id="pay-button" class="w-full bg-[#2d2d35] text-white py-3 rounded-[8px] mt-4 font-normal text-base hover:bg-opacity-90 transition-all active:scale-[0.98]" onclick="processPayment()">
+          Betala köp
+        </button>
+      </div>
+    </section>
+    
+    <!-- Success Modal -->
+    <div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl p-8 mx-4 max-w-sm text-center transform scale-95 opacity-0 transition-all duration-300" id="modal-content">
+        <div class="w-16 h-16 bg-accent-green rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <h3 class="font-kansas font-semibold text-2xl text-black mb-2">Tack för din order!</h3>
+        <p class="text-gray-600 mb-6">Din beställning har bekräftats. En bekräftelse skickas till din e-post.</p>
+        <button onclick="closeModal()" class="bg-prim-800 text-white px-8 py-3 rounded-lg font-medium hover:bg-opacity-90 transition-colors">
+          Stäng
+        </button>
+      </div>
+    </div>
+    
+    <!-- Address Edit Modal -->
+    <div id="address-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl p-6 mx-4 w-full max-w-sm transform scale-95 opacity-0 transition-all duration-300" id="address-modal-content">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-kansas font-semibold text-xl text-black">Ändra uppgifter</h3>
+          <button onclick="closeAddressModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Namn</label>
+            <input type="text" id="edit-name" value="Sven Svensson" class="w-full border border-gray-300 rounded-[4px] px-3 py-2 text-sm focus:outline-none focus:border-prim-800">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Adress</label>
+            <input type="text" id="edit-address" value="Sankte Knutsgatan 8" class="w-full border border-gray-300 rounded-[4px] px-3 py-2 text-sm focus:outline-none focus:border-prim-800">
+          </div>
+          <div class="flex gap-3">
+            <div class="flex-1">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Postnummer</label>
+              <input type="text" id="edit-postal" value="271 50" class="w-full border border-gray-300 rounded-[4px] px-3 py-2 text-sm focus:outline-none focus:border-prim-800">
+            </div>
+            <div class="flex-1">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Stad</label>
+              <input type="text" id="edit-city" value="Ystad" class="w-full border border-gray-300 rounded-[4px] px-3 py-2 text-sm focus:outline-none focus:border-prim-800">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">E-post</label>
+            <input type="email" id="edit-email" value="s.svensson@gmail.com" class="w-full border border-gray-300 rounded-[4px] px-3 py-2 text-sm focus:outline-none focus:border-prim-800">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+            <input type="tel" id="edit-phone" value="072 123 45 30" class="w-full border border-gray-300 rounded-[4px] px-3 py-2 text-sm focus:outline-none focus:border-prim-800">
+          </div>
+        </div>
+        
+        <div class="flex gap-3 mt-6">
+          <button onclick="closeAddressModal()" class="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-[8px] font-medium hover:bg-gray-50 transition-colors">
+            Avbryt
+          </button>
+          <button onclick="saveAddress()" class="flex-1 bg-[#2d2d35] text-white py-2.5 rounded-[8px] font-medium hover:bg-opacity-90 transition-colors">
+            Spara
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // State
+    let state = {
+      quantity: 1,
+      unitPrice: 79,
+      shippingCost: 29,
+      donation: 0,
+      postalCodeFilled: false
+    };
+    
+    // Check postal code and show delivery options
+    function checkPostalCode(input) {
+      const value = input.value.replace(/\s/g, '');
+      if (value.length >= 5 && !state.postalCodeFilled) {
+        state.postalCodeFilled = true;
+        const deliveryOptions = document.getElementById('delivery-options');
+        deliveryOptions.classList.remove('hidden');
+        deliveryOptions.classList.add('slide-down');
+        
+        // Scroll to show delivery options
+        setTimeout(() => {
+          deliveryOptions.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+      } else if (value.length < 5) {
+        state.postalCodeFilled = false;
+      }
+    }
+    
+    // Update quantity
+    function updateQuantity(change) {
+      state.quantity = Math.max(1, state.quantity + change);
+      document.getElementById('quantity').textContent = state.quantity;
+      
+      // Animate the quantity display
+      const qtyEl = document.getElementById('quantity');
+      qtyEl.classList.add('animate-pulse-once');
+      setTimeout(() => qtyEl.classList.remove('animate-pulse-once'), 300);
+      
+      updatePrices();
+    }
+    
+    // Select delivery option
+    function selectDelivery(cost) {
+      state.shippingCost = cost;
+      updatePrices();
+    }
+    
+    // Select donation amount
+    function selectDonation(amount, button) {
+      // Clear custom donation
+      document.getElementById('custom-donation').value = '';
+      
+      // Toggle selection
+      document.querySelectorAll('.donation-btn').forEach(btn => btn.classList.remove('selected'));
+      
+      if (state.donation === amount) {
+        state.donation = 0;
+      } else {
+        state.donation = amount;
+        button.classList.add('selected');
+      }
+      
+      updatePrices();
+    }
+    
+    // Custom donation input
+    function customDonation(input) {
+      document.querySelectorAll('.donation-btn').forEach(btn => btn.classList.remove('selected'));
+      let value = parseInt(input.value) || 0;
+      if (value < 0) {
+        value = 0;
+        input.value = 0;
+      }
+      if (value > 5000) {
+        value = 5000;
+        input.value = 5000;
+      }
+      state.donation = value;
+      updatePrices();
+    }
+    
+    // Update all prices
+    function updatePrices() {
+      const itemsTotal = state.quantity * state.unitPrice;
+      const total = itemsTotal + state.shippingCost + state.donation;
+      const tax = total * 0.2; // 25% VAT
+      
+      document.getElementById('items-total').textContent = itemsTotal + 'kr';
+      document.getElementById('shipping-cost').textContent = state.shippingCost + 'kr';
+      document.getElementById('total-price').textContent = total + 'kr';
+      document.getElementById('final-total').textContent = total + ' kr';
+      
+      // Update details
+      document.getElementById('detail-items').textContent = itemsTotal + ' kr';
+      document.getElementById('detail-shipping').textContent = state.shippingCost + ' kr';
+      document.getElementById('detail-donation').textContent = state.donation + ' kr';
+      document.getElementById('detail-tax').textContent = tax.toFixed(2).replace('.', ',') + ' kr';
+    }
+    
+    // Toggle discount code input
+    function toggleDiscountCode() {
+      const section = document.getElementById('discount-section');
+      section.classList.toggle('hidden');
+      if (!section.classList.contains('hidden')) {
+        section.querySelector('input').focus();
+      }
+    }
+    
+    // Toggle details
+    function toggleDetails() {
+      const section = document.getElementById('details-section');
+      section.classList.toggle('hidden');
+    }
+    
+    // Process payment
+    function processPayment() {
+      const btn = document.getElementById('pay-button');
+      btn.textContent = 'Bearbetar...';
+      btn.disabled = true;
+      
+      setTimeout(() => {
+        btn.textContent = 'Betala köp';
+        btn.disabled = false;
+        showSuccessModal();
+      }, 1500);
+    }
+    
+    // Show success modal
+    function showSuccessModal() {
+      const modal = document.getElementById('success-modal');
+      const content = document.getElementById('modal-content');
+      
+      modal.classList.remove('hidden');
+      
+      setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+      }, 10);
+    }
+    
+    // Close modal
+    function closeModal() {
+      const modal = document.getElementById('success-modal');
+      const content = document.getElementById('modal-content');
+      
+      content.classList.remove('scale-100', 'opacity-100');
+      content.classList.add('scale-95', 'opacity-0');
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+    
+    // Close modal on backdrop click
+    document.getElementById('success-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'success-modal') {
+        closeModal();
+      }
+    });
+    
+    // Address modal functions
+    function openAddressModal() {
+      const modal = document.getElementById('address-modal');
+      const content = document.getElementById('address-modal-content');
+      
+      modal.classList.remove('hidden');
+      
+      setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+      }, 10);
+    }
+    
+    function closeAddressModal() {
+      const modal = document.getElementById('address-modal');
+      const content = document.getElementById('address-modal-content');
+      
+      content.classList.remove('scale-100', 'opacity-100');
+      content.classList.add('scale-95', 'opacity-0');
+      
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+    
+    function saveAddress() {
+      const name = document.getElementById('edit-name').value;
+      const address = document.getElementById('edit-address').value;
+      const postal = document.getElementById('edit-postal').value;
+      const city = document.getElementById('edit-city').value;
+      const email = document.getElementById('edit-email').value;
+      const phone = document.getElementById('edit-phone').value;
+      
+      // Mask phone number for display
+      const maskedPhone = phone.substring(0, 3) + '•••••' + phone.slice(-2);
+      
+      // Update display
+      document.getElementById('display-name').textContent = name;
+      document.getElementById('display-address').textContent = `${address}, ${postal}, ${city}`;
+      document.getElementById('display-contact').textContent = `${email}, ${maskedPhone}`;
+      
+      closeAddressModal();
+    }
+    
+    // Close address modal on backdrop click
+    document.getElementById('address-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'address-modal') {
+        closeAddressModal();
+      }
+    });
+    
+    // Initialize prices
+    updatePrices();
+  </script>
+</body>
+</html>
