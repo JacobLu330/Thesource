@@ -171,6 +171,21 @@
       height: 20px;
       color: #0b891e;
     }
+    
+    /* Disabled/greyed out section */
+    .section-disabled {
+      opacity: 0.4;
+      pointer-events: none;
+      filter: grayscale(30%);
+    }
+    
+    .section-disabled::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: transparent;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body class="bg-paper-600 min-h-screen">
@@ -191,7 +206,7 @@
     </header>
     
     <!-- Cart Summary Section -->
-    <section class="bg-box mt-5 rounded-t-[8px] px-5 py-6">
+    <section class="bg-box mt-5 rounded-[8px] px-5 py-6">
       <h1 class="font-kansas font-semibold text-2xl text-center text-black mb-6 tracking-wide">Kassa</h1>
       
       <!-- Product Card -->
@@ -358,8 +373,8 @@
       </div>
     </section>
     
-    <!-- Sustainable Choices Section -->
-    <section class="bg-box mt-4 rounded-[8px] px-5 py-6">
+    <!-- Sustainable Choices Section (disabled until postal code filled) -->
+    <section id="sustainability-section" class="bg-box mt-4 rounded-[8px] px-5 py-6 relative section-disabled transition-all duration-300">
       <h2 class="font-kansas font-semibold text-2xl text-center text-black mb-6">Hållbara val</h2>
       
       <!-- Packaging Options -->
@@ -390,7 +405,8 @@
                   <svg class="w-6 h-6 text-accent-fossil" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
                   </svg>
-                  <img src="http://localhost:3845/assets/07cda8e303e3a346e14eb5ea2324fad21da8b7f5.png" alt="Eco packaging" class="w-14 h-14 rounded object-cover" onerror="this.src='https://images.unsplash.com/photo-1605918321755-0b5a0e9d2906?w=60&h=60&fit=crop'">
+                  <!-- Box/package image from Figma -->
+                  <img src="assets/lodda-box.png" alt="Eco packaging" class="w-14 h-14 rounded object-cover">
                 </div>
               </div>
             </div>
@@ -405,7 +421,8 @@
             <p class="font-medium text-base text-black">Klimatkompensera din order</p>
             <p class="text-xs text-gray-500 mt-2 leading-relaxed">Vi samarbetar med <strong class="font-bold">Vi-skogen</strong> för en hållbar framtid. Vi matchar din donation upp till 1000 kr!</p>
           </div>
-          <img src="http://localhost:3845/assets/06f066558c233872570a3165536aa70e1386f51d.png" alt="Vi-skogen" class="w-9 h-11 object-contain flex-shrink-0" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Vi-skogen_logo.svg/200px-Vi-skogen_logo.svg.png'">
+          <!-- Vi-skogen logo from Figma -->
+          <img src="assets/vi-skogen-logo.png" alt="Vi-skogen" class="w-9 h-11 object-contain flex-shrink-0">
         </div>
         
         <div class="flex gap-2 mt-4">
@@ -416,8 +433,8 @@
       </div>
     </section>
     
-    <!-- Address & Payment Section -->
-    <section class="bg-box mt-4 rounded-[8px] px-5 py-6">
+    <!-- Address & Payment Section (disabled until postal code filled) -->
+    <section id="payment-section" class="bg-box mt-4 rounded-[8px] px-5 py-6 relative section-disabled transition-all duration-300">
       <h2 class="font-kansas font-semibold text-2xl text-center text-black mb-6">Address & Betalning</h2>
       
       <div class="bg-white border border-gray-200 rounded-[8px] p-4">
@@ -443,7 +460,7 @@
           <label class="font-medium text-base text-black block mb-3">Betalningssätt</label>
           
           <div class="space-y-0">
-            <!-- Direct Payment -->
+            <!-- Direct Payment (Klarna) -->
             <label class="radio-option py-4 border-t border-gray-200 cursor-pointer">
               <input type="radio" name="payment" value="direct" checked>
               <div class="flex-1">
@@ -542,7 +559,7 @@
         </p>
         
         <!-- Pay Button -->
-        <button id="pay-button" class="w-full bg-[#2d2d35] text-white py-3 rounded-[8px] mt-4 font-normal text-base hover:bg-opacity-90 transition-all active:scale-[0.98]" onclick="processPayment()">
+        <button id="pay-button" class="w-full bg-[#2d2d35] text-white py-3 rounded-[8px] mt-4 font-normal text-base hover:bg-opacity-90 transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed" onclick="processPayment()" disabled>
           Betala köp
         </button>
       </div>
@@ -624,7 +641,8 @@
       unitPrice: 79,
       shippingCost: 29,
       donation: 0,
-      postalCodeFilled: false
+      postalCodeFilled: false,
+      deliverySelected: false
     };
     
     // Check postal code and show delivery options
@@ -636,13 +654,36 @@
         deliveryOptions.classList.remove('hidden');
         deliveryOptions.classList.add('slide-down');
         
+        // Enable subsequent sections
+        enableSections();
+        
         // Scroll to show delivery options
         setTimeout(() => {
           deliveryOptions.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }, 100);
       } else if (value.length < 5) {
         state.postalCodeFilled = false;
+        disableSections();
       }
+    }
+    
+    // Enable sections after postal code is filled
+    function enableSections() {
+      document.getElementById('sustainability-section').classList.remove('section-disabled');
+      document.getElementById('payment-section').classList.remove('section-disabled');
+      document.getElementById('pay-button').disabled = false;
+    }
+    
+    // Disable sections before postal code is filled
+    function disableSections() {
+      document.getElementById('sustainability-section').classList.add('section-disabled');
+      document.getElementById('payment-section').classList.add('section-disabled');
+      document.getElementById('pay-button').disabled = true;
+      
+      // Hide delivery options
+      const deliveryOptions = document.getElementById('delivery-options');
+      deliveryOptions.classList.add('hidden');
+      deliveryOptions.classList.remove('slide-down');
     }
     
     // Update quantity
@@ -661,6 +702,7 @@
     // Select delivery option
     function selectDelivery(cost) {
       state.shippingCost = cost;
+      state.deliverySelected = true;
       updatePrices();
     }
     
@@ -733,6 +775,11 @@
     
     // Process payment
     function processPayment() {
+      if (!state.postalCodeFilled) {
+        alert('Vänligen fyll i ditt postnummer först.');
+        return;
+      }
+      
       const btn = document.getElementById('pay-button');
       btn.textContent = 'Bearbetar...';
       btn.disabled = true;
